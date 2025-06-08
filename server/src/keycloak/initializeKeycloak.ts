@@ -1,15 +1,8 @@
 import Keycloak from 'keycloak-connect';
 import session from 'express-session';
 import express from 'express';
+import { keycloakConfig } from './keycloakConfig';
 
- export const keycloakConfig = {
-        'realm': 'Messenger',
-        'auth-server-url': 'http://localhost:8080/auth',
-        'ssl-required': 'external',
-        'resource': 'Messenger-realm',
-        'public-client': true,
-        'confidential-port': 0,
-    };
 export function initializeKeycloak() {
     const memoryStore = new session.MemoryStore();
     const app = express();
