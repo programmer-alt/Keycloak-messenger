@@ -1,5 +1,6 @@
 import express from 'express';
-import { initializeKeycloak , keycloakConfig} from './keycloakConfig'; 
+import { initializeKeycloak } from './keycloak/initializeKeycloak'; 
+import {keycloakConfig} from './keycloak/keycloakConfig';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
