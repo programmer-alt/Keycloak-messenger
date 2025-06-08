@@ -1,26 +1,29 @@
 import express from 'express';
-import Keycloak from 'keycloak-connect';
-import session from 'express-session';
+import { initializeKeycloak , keycloakConfig} from './keycloakConfig'; 
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
-// настройка сессий
-const memoryStore = new session.MemoryStore();
+// Инициализация Keycloak
+const keycloak = initializeKeycloak();
 
-app.use(session({
-    secret: 'some secret',
-    resave: false,
-    saveUnitilized: true,
-    store: memoryStore,
-}),
-);
-// инициализация Keycloak
-const keycloak = new Keycloak({
-  store: memoryStore(),
+app.use(express.json());
+
+app.get('/protected', keycloak.protect(), (req, res) => {
+    res.json({
+        message: 'Это защищенный маршрут',
+        user: (req as any).kauth.grant.access_token.content.preferred_username,
+    });
 });
-app.use(keycloak.middleware());
-app.listen(PORT, ()=> {
-    console.log(` Сервер работает на порту ${PORT}`);
+
+app.get('/login', keycloak.protect(), (req, res) => {
+    res.json({
+        message: 'Вы успешно авторизованы!',
+        user: (req as any).kauth.grant.access_token.content.preferred_username,
+    });
+});
+
+app.listen(PORT, () => {
+    console.log(`Сервер работает на порту ${PORT}`);
+    console.log(`Keycloak настроен на realm: ${keycloakConfig.realm}`);
 });
