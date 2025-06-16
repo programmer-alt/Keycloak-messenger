@@ -8,7 +8,7 @@ const router = Router();
 router.post('/', 
   [
     body('receiver_id').isString().notEmpty().withMessage(('receiver_id обязательно')),
-    body('message').isString().notEmpty().withMessage(('message обязательно'))
+    body('message').isString().notEmpty().withMessage(('message обязательно')),
   ],
   async (req: Request, res: Response): Promise<void> => {
     const errors = validationResult(req);
