@@ -1,4 +1,10 @@
- export const keycloakConfig = {
+/*
+ объект конфигурации для интеграции с Keycloak, 
+Конфигурация экспортируется как `keycloakConfig`,
+
+*/
+
+export const keycloakConfig = {
         'realm': 'Messenger',
         'auth-server-url': 'http://localhost:8080/auth',
         'ssl-required': 'external',
