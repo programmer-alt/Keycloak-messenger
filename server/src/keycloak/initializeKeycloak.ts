@@ -17,18 +17,22 @@ export function initializeKeycloak(app: express.Application) {
     const memoryStore = new session.MemoryStore();
    
 
+    const sessionSecret = process.env.SESSION_SECRET;
+    if (!sessionSecret) {
+        throw new Error('SESSION_SECRET environment variable not set');
+    }
+
     app.use(session({
-        secret: 'some secret',
+        secret: sessionSecret,
         resave: false,
         saveUninitialized: true,
         store: memoryStore,
     }));
-
    
 
     const keycloak = new Keycloak({ store: memoryStore }, keycloakConfig);
 
-    app.use(keycloak.middleware({
+    app.use(...keycloak.middleware({
         logout: '/logout',
         admin: '/admin',
     }));
