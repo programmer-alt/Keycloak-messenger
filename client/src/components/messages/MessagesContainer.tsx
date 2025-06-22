@@ -11,7 +11,7 @@ export interface Message {
   timestamp: string;
 }
 
-const socket = io('http://localhost:3001'); // 连接到WebSocket服务器
+const socket = io('http://localhost:3001'); 
 
 const MessagesContainer: React.FC = () => {
   const { user, authenticated } = useKeycloakAuth();
@@ -21,7 +21,7 @@ const MessagesContainer: React.FC = () => {
   useEffect(() => {
     if (!authenticated) return;
 
-    // 从服务器加载消息
+    
     fetch('http://localhost:3001/api/messages')
       .then(res => res.json())
       .then((data: Message[]) => {
@@ -33,12 +33,12 @@ const MessagesContainer: React.FC = () => {
         setLoading(false);
       });
 
-    // 订阅新消息
+    
     socket.on('newMessage', (message: Message) => {
       setMessages(prev => [...prev, message]);
     });
 
-    // 清理订阅
+    
     return () => {
       socket.off('newMessage');
     };
@@ -54,7 +54,7 @@ const MessagesContainer: React.FC = () => {
       timestamp: new Date().toISOString(),
     };
 
-    // 通过WebSocket发送消息
+    
     socket.emit('sendMessage', newMessage);
   };
 
