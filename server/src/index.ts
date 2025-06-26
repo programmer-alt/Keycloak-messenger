@@ -3,19 +3,24 @@ import { initializeKeycloak } from './keycloak/initializeKeycloak';
 import { keycloakConfig } from './keycloak/keycloakConfig';
 import messagesRouter from './routes/messages';
 import { Server as SocketIOServer} from 'socket.io';
-import http from 'http'
-
+import http from 'http';
+import {socketAuthMiddleware} from './middleware/socketAuthMiddleware';
 const app = express();
 // Создание HTTP-сервера
 const server = http.createServer(app);
 // Создание Socket.IO-сервера
-const io = new SocketIOServer(server);
+const io = new SocketIOServer(server, {
+    cors: {
+        origin: '*',
+        methods: ['GET', 'POST'],
+    }
+});
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
 // Инициализация Keycloak
-const keycloak = initializeKeycloak(app);
+ const keycloak = initializeKeycloak(app);
 
 app.use('/messages', keycloak.protect() as any, messagesRouter);
 
@@ -33,11 +38,13 @@ app.get('/login', keycloak.protect() as any, (req, res) => {
     });
 });
 
-// Websocket логика
+// Middleware для аутентификации socket.io
+io.use(socketAuthMiddleware(keycloak));
+
 io.on('connection', (socket) => {
     console.log(' Пользователь подключился к WebSocket');
     socket.on('sendMessage', (data) => {
-        io.emit('message', data);
+        io.emit('newMessage', data);
     });
     socket.on('disconnect', () => {
         console.log('Пользователь отключился от WebSocket');
