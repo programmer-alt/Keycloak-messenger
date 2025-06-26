@@ -4,6 +4,16 @@ import MessageList from './MessageList';
 import { useKeycloakAuth } from '../../hooks/useKeycloakAuth';
 import io from 'socket.io-client';
 
+/*
+
+MessagesContainer — основной компонент чата.
+Проверяет авторизацию пользователя через Keycloak.
+При авторизации загружает историю сообщений с сервера и подписывается на новые сообщения через WebSocket (socket.io).
+Все новые сообщения (от других пользователей или себя) добавляются в список сообщений в реальном времени.
+Позволяет отправлять сообщения, которые сразу отправляются на сервер через сокет.
+Если пользователь не авторизован — отображает просьбу войти.
+Пока сообщения загружаются — показывает индикатор загрузки. 
+*/
 export interface Message {
   id: string;
   sender: string;
@@ -14,14 +24,17 @@ export interface Message {
 const socket = io('http://localhost:3001'); 
 
 const MessagesContainer: React.FC = () => {
+  // деструктуризация user и authenticated из useKeycloakAuth
   const { user, authenticated } = useKeycloakAuth();
+  // хук useState для хранения сообщений
   const [messages, setMessages] = useState<Message[]>([]);
+  // хук useState для отслеживания загрузки сообщений
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!authenticated) return;
 
-    
+    // 
     fetch('http://localhost:3001/api/messages')
       .then(res => res.json())
       .then((data: Message[]) => {
@@ -59,11 +72,11 @@ const MessagesContainer: React.FC = () => {
   };
 
   if (!authenticated) {
-    return <div>Please login to view messages.</div>;
+    return <div> Пожалуйста авторизуйтесь.</div>;
   }
 
   if (loading) {
-    return <div>Loading messages...</div>;
+    return <div>Загрузка сообщений...</div>;
   }
 
   return (

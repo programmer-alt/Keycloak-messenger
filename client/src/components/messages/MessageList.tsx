@@ -2,6 +2,9 @@ import React from 'react';
 import { Message } from './MessagesContainer';
 import './cssMessages/MessageList.css';
 
+/*
+  Комопнент отвечающий за отображение списка сообщений.
+*/
 interface MessageListProps {
   messages: Message[];
 }
