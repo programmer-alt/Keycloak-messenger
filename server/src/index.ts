@@ -20,7 +20,8 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 // Инициализация Keycloak
- const keycloak = initializeKeycloak(app);
+
+const keycloak = initializeKeycloak(app);
 
 app.use('/messages', keycloak.protect() as any, messagesRouter);
 
@@ -41,6 +42,7 @@ app.get('/login', keycloak.protect() as any, (req, res) => {
 // Middleware для аутентификации socket.io
 io.use(socketAuthMiddleware(keycloak));
 
+// 
 io.on('connection', (socket) => {
     console.log(' Пользователь подключился к WebSocket');
     socket.on('sendMessage', (data) => {
