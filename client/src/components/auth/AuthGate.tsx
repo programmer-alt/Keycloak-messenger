@@ -12,10 +12,13 @@ interface AuthGateProps {
 }
 
 export const AuthGate: React.FC<AuthGateProps> = ({ children }) => {
-    const { user, authenticated } = useKeycloakAuth();
+    const { user, authenticated, loading } = useKeycloakAuth();
 
-    if(!authenticated) {
+    if(loading) {
         return <div>Загрузка...</div>;
+    }
+    if(!authenticated) {
+        return <div>Пожалуйста, войдите через Keycloak</div>;
     }
     return (
         <>
