@@ -12,4 +12,9 @@ export default defineConfig({
       '@': '/src',
     },
   },
+  build: {
+    rollupOptions: {
+      input: '/src/index.tsx',
+    },
+  },
 });
