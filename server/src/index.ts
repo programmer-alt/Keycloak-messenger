@@ -28,14 +28,14 @@ app.use('/messages', keycloak.protect() as any, messagesRouter);
 app.get('/protected', keycloak.protect() as any, (req, res) => {
     res.json({
         message: 'Это защищенный маршрут',
-        user: (req as any).kauth.grant.access_token.content.preferred_username,
+        user: (req as any)?.kauth?.grant?.access_token?.content?.preferred_username
     });
 });
 
 app.get('/login', keycloak.protect() as any, (req, res) => {
     res.json({
         message: 'Вы успешно авторизованы!',
-        user: (req as any).kauth.grant.access_token.content.preferred_username,
+        user: (req as any)?.kauth?.grant?.access_token?.content?.preferred_username,
     });
 });
 
