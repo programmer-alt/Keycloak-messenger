@@ -1,21 +1,17 @@
 import { useEffect, useState } from 'react';
 import keycloak from '../keycloakClient/keycloakInitClient';
 
-/*
-    хук для работы с авторизацией через Keycloak,
-    возвращает объект с данными об авторизации
-    и экземпляром Keycloak
-    
-*/
+/**
+ * Хук для работы с авторизацией через Keycloak.
+ * Возвращает объект с данными об авторизации пользователя и экземпляром Keycloak.
+ */
 
-// интерфейс для возвращаемых данных
 interface KeycloakAuth {
     authenticated: boolean;
     user: string | undefined;
     keycloakInstance: typeof keycloak;
 }
-
-export function useKeycloakAuth() {
+export function useKeycloakAuth(): KeycloakAuth {
     // для хранения информации об авторизации
     const [authenticated, setAuthenticated] = useState(false);
     // для хранения имени пользователя (если авторизация успешна)
