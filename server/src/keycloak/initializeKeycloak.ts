@@ -2,6 +2,7 @@ import Keycloak from 'keycloak-connect';
 import session from 'express-session';
 import express from 'express';
 import { keycloakConfig } from './keycloakConfig';
+import dotenv from 'dotenv';
 /**
  * Модуль инициализации Keycloak для интеграции с Express-приложением.
  *
@@ -13,7 +14,9 @@ import { keycloakConfig } from './keycloakConfig';
  *    - Подключает middleware Keycloak к приложению Express, чтобы все маршруты могли быть защищены через Keycloak ( /logout и /admin).
  *    - Возвращает экземпляр Keycloak, чтобы его можно было использовать для защиты маршрутов в других частях приложения.
  */
+
 export function initializeKeycloak(app: express.Application) {
+    dotenv.config({ path: '../.envServer' });
     const memoryStore = new session.MemoryStore();
    
 
