@@ -25,7 +25,6 @@ export function useKeycloakAuth(): KeycloakAuth {
             setAuthenticated(auth);
             // если авторизация успешна, получение имени пользователя
             if (auth) {
-                // @ts-expect-error
                 setUser(keycloak.tokenParsed?.preferred_username);
             }
         }).error((err: any) => {
