@@ -10,12 +10,15 @@ interface KeycloakAuth {
     authenticated: boolean;
     user: string | undefined;
     keycloakInstance: typeof keycloak;
+    loading: boolean;
 }
 export function useKeycloakAuth(): KeycloakAuth {
     // для хранения информации об авторизации
     const [authenticated, setAuthenticated] = useState(false);
     // для хранения имени пользователя (если авторизация успешна)
     const [user, setUser] = useState<string | undefined>(undefined);
+    // для хранения состояния загрузки
+    const [loading, setLoading] = useState(true);
 
     // инициализация Keycloak
     useEffect(() => {
@@ -27,8 +30,10 @@ export function useKeycloakAuth(): KeycloakAuth {
             if (auth) {
                 setUser(keycloak.tokenParsed?.preferred_username);
             }
+            setLoading(false);
         }).error((err: any) => {
             console.error('Keycloak init failed', err);
+            setLoading(false);
         });
     }, []);
 
@@ -36,5 +41,6 @@ export function useKeycloakAuth(): KeycloakAuth {
         authenticated,
         user,
         keycloakInstance: keycloak,
+        loading,
     };
 }
