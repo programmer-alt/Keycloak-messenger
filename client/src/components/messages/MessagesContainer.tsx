@@ -32,7 +32,9 @@ const MessagesContainer: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!authenticated) return;
+    if (!authenticated) {
+      return
+    }
 
     // 
     fetch('http://localhost:3001/api/messages')
@@ -58,7 +60,9 @@ const MessagesContainer: React.FC = () => {
   }, [authenticated]);
 
   const handleSend = (content: string) => {
-    if (!user || !content.trim()) return;
+    if (!user || !content.trim()) {
+      return;
+    }
 
     const newMessage = {
       id: Date.now().toString(),
