@@ -1,7 +1,5 @@
 import {  Socket } from 'socket.io';
-import { NextFunction } from 'express';
 import Keycloak from 'keycloak-connect';
-
 /*
     Middleware для проверки токена при подключении к сокету
 */
