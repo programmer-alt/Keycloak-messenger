@@ -22,7 +22,7 @@ export function initializeKeycloak(app: express.Application) {
 
     const sessionSecret = process.env.SESSION_SECRET;
     if (!sessionSecret) {
-        throw new Error('SESSION_SECRET environment variable not set');
+        throw new Error('SESSION_SECRET не задан в переменных окружения ');
     }
 
     app.use(session({

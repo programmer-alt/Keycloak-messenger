@@ -23,18 +23,19 @@ export function useKeycloakAuth(): KeycloakAuth {
     // инициализация Keycloak
     useEffect(() => {
         // проверка авторизации при загрузке страницы
-        keycloak.init({ onLoad: 'login-required' }).success((auth: boolean) => {
-            // обновление состояний при успешной авторизации
-            setAuthenticated(auth);
-            // если авторизация успешна, получение имени пользователя
-            if (auth) {
-                setUser(keycloak.tokenParsed?.preferred_username);
-            }
-            setLoading(false);
-        }).error((err: any) => {
-            console.error('Keycloak init failed', err);
-            setLoading(false);
-        });
+        keycloak.init({ onLoad: 'login-required' })
+            .then((auth) => {
+                setAuthenticated(auth);
+                if (auth) {
+                    setUser(keycloak.tokenParsed?.preferred_username);
+                }
+            })
+            .catch((err) => {
+                console.error('Keycloak init failed', err);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
     }, []);
 
     return {
