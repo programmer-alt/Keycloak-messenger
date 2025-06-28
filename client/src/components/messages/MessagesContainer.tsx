@@ -24,19 +24,15 @@ export interface Message {
 const socket = io('http://localhost:3001'); 
 
 const MessagesContainer: React.FC = () => {
-  // деструктуризация user и authenticated из useKeycloakAuth
-  const { user, authenticated } = useKeycloakAuth();
-  // хук useState для хранения сообщений
+  const { user, authenticated, loading: authLoading } = useKeycloakAuth();
   const [messages, setMessages] = useState<Message[]>([]);
-  // хук useState для отслеживания загрузки сообщений
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!authenticated) {
-      return
+      return;
     }
 
-    // 
     fetch('http://localhost:3001/api/messages')
       .then(res => res.json())
       .then((data: Message[]) => {
@@ -48,12 +44,10 @@ const MessagesContainer: React.FC = () => {
         setLoading(false);
       });
 
-    
     socket.on('newMessage', (message: Message) => {
       setMessages(prev => [...prev, message]);
     });
 
-    
     return () => {
       socket.off('newMessage');
     };
@@ -71,9 +65,12 @@ const MessagesContainer: React.FC = () => {
       timestamp: new Date().toISOString(),
     };
 
-    
     socket.emit('sendMessage', newMessage);
   };
+
+  if (authLoading) {
+    return null;
+  }
 
   if (!authenticated) {
     return <div> Пожалуйста авторизуйтесь.</div>;
