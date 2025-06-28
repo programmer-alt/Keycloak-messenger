@@ -29,9 +29,9 @@ const MessagesInput: React.FC<MessagesInputProps> = ({ onSend }) => {
         value={inputMessage}
         onChange={(e) => setInputMessage(e.target.value)}
         onKeyUp={handleKeyPress}
-        placeholder="Enter your message"
+        placeholder="Введите сообщение..."
       />
-      <button onClick={handleSend}>Send</button>
+      <button onClick={handleSend}>Отправить</button>
     </div>
   );
 };
