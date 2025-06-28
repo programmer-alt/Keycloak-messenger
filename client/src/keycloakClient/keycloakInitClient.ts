@@ -1,10 +1,9 @@
-
 import Keycloak from 'keycloak-js';
 
-const keycloak = Keycloak({
-    url: 'http://localhost:8080/auth',
+const keycloak = new Keycloak({
+    url: 'http://localhost:8080',
     realm: 'Messenger',
-    clientId: 'messenger-client',
+    clientId: 'MessengerClient',
 });
 
 export default keycloak;
