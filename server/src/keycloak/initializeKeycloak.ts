@@ -15,30 +15,38 @@ import dotenv from 'dotenv';
  *    - Возвращает экземпляр Keycloak, чтобы его можно было использовать для защиты маршрутов в других частях приложения.
  */
 
-export function initializeKeycloak(app: express.Application) {
-    dotenv.config({ path: '../.envServer' });
-    const memoryStore = new session.MemoryStore();
-   
+export function initializeKeycloak(
+  app: express.Application,
+  options?: {
+    store?: session.Store;
+    sessionSecret?: string;
+    keycloakConfigOverride?: any;
+  }
+): Keycloak.Keycloak {
+  const memoryStore = options?.store || new session.MemoryStore();
+  const sessionSecret = options?.sessionSecret || process.env.SESSION_SECRET;
+  if (!sessionSecret) {
+    throw new Error('SESSION_SECRET не задан в переменных окружения');
+  }
 
-    const sessionSecret = process.env.SESSION_SECRET;
-    if (!sessionSecret) {
-        throw new Error('SESSION_SECRET не задан в переменных окружения ');
-    }
+  app.use(
+    session({
+      secret: sessionSecret,
+      resave: false,
+      saveUninitialized: true,
+      store: memoryStore,
+    })
+  );
 
-    app.use(session({
-        secret: sessionSecret,
-        resave: false,
-        saveUninitialized: true,
-        store: memoryStore,
-    }));
-   
+  const kcConfig = options?.keycloakConfigOverride || keycloakConfig;
+  const keycloak = new Keycloak({ store: memoryStore }, kcConfig);
 
-    const keycloak = new Keycloak({ store: memoryStore }, keycloakConfig);
+  app.use(
+    ...keycloak.middleware({
+      logout: '/logout',
+      admin: '/admin',
+    })
+  );
 
-    app.use(...keycloak.middleware({
-        logout: '/logout',
-        admin: '/admin',
-    }));
-
-    return keycloak;
+  return keycloak;
 }
