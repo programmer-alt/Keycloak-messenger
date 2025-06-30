@@ -27,20 +27,28 @@ const MessagesContainer: React.FC = () => {
   const { user, authenticated, loading: authLoading } = useKeycloakAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Загрузка истории сообщений
+  // Загрузка истории сообщен��й
   useEffect(() => {
     if (!authenticated) return;
 
     setLoading(true);
+    setError(null);
     fetch(`${SOCKET_URL}/api/messages`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`Ошибка загрузки: ${res.status} ${res.statusText}`);
+        }
+        return res.json();
+      })
       .then((data: Message[]) => {
         setMessages(data);
         setLoading(false);
       })
       .catch((error) => {
-        console.error('Error fetching messages:', error);
+        console.error(' Ошибка загрузки сообщений:', error);
+        setError(error.message || 'Ошибка загрузки сообщений');
         setLoading(false);
       });
   }, [authenticated]);
@@ -74,10 +82,7 @@ const MessagesContainer: React.FC = () => {
     return null;
   }
 
-  if (!authenticated) {
-    return <div> Пожалуйста авторизуйтесь.</div>;
-  }
-
+  
   if (loading) {
     return <div>Загрузка сообщений...</div>;
   }

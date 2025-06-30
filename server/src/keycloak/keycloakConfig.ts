@@ -8,10 +8,10 @@ export const keycloakConfig = {
         'realm': 'Messenger',
         'auth-server-url': 'http://localhost:8080/auth',
         'ssl-required': 'external',
-        'resource': 'Messenger-realm',
+        'resource': 'MessengerClient',
          'credentials': {
         secret: 'AGjchgw3eURL0WqmdfU5f3zYogG4And9', 
     },
-        'public-client': true,
+        'public-client': false,
         'confidential-port': 0,
     };

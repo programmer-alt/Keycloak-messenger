@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import { initializeKeycloak } from './keycloak/initializeKeycloak'; 
 import { keycloakConfig } from './keycloak/keycloakConfig';
 import messagesRouter from './routes/messages';
@@ -9,6 +10,14 @@ import { createServerMessage } from './utilsComponents/messageFactory';
 
 
 const app = express();
+
+// Добавляем CORS middleware для Express
+app.use(cors({
+    origin: 'http://localhost:3001',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
+}));
+
 // Создание HTTP-сервера
 const server = http.createServer(app);
 // Создание Socket.IO-сервера
