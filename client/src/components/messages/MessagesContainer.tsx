@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import MessagesInput from './MessagesInput';
 import MessageList from './MessageList';
 import { useKeycloakAuth } from '../../hooks/useKeycloakAuth';
-import io from 'socket.io-client';
+import io, { Socket } from 'socket.io-client';
 
 /*
 
@@ -21,23 +21,19 @@ export interface Message {
   timestamp: string;
 }
 
-const socket = io('http://localhost:3001'); 
+const SOCKET_URL = 'http://localhost:3001'; 
 
 const MessagesContainer: React.FC = () => {
-  // деструктуризация user и authenticated из useKeycloakAuth
-  const { user, authenticated } = useKeycloakAuth();
-  // хук useState для хранения сообщений
+  const { user, authenticated, loading: authLoading } = useKeycloakAuth();
   const [messages, setMessages] = useState<Message[]>([]);
-  // хук useState для отслеживания загрузки сообщений
   const [loading, setLoading] = useState(true);
 
+  // Загрузка истории сообщений
   useEffect(() => {
-    if (!authenticated) {
-      return
-    }
+    if (!authenticated) return;
 
-    // 
-    fetch('http://localhost:3001/api/messages')
+    setLoading(true);
+    fetch(`${SOCKET_URL}/api/messages`)
       .then(res => res.json())
       .then((data: Message[]) => {
         setMessages(data);
@@ -47,33 +43,36 @@ const MessagesContainer: React.FC = () => {
         console.error('Error fetching messages:', error);
         setLoading(false);
       });
+  }, [authenticated]);
 
-    
+  // Работа с сокетом
+  useEffect(() => {
+    if (!authenticated) return;
+
+    const socket: Socket = io(SOCKET_URL);
+
     socket.on('newMessage', (message: Message) => {
       setMessages(prev => [...prev, message]);
     });
 
-    
     return () => {
-      socket.off('newMessage');
+      socket.disconnect();
     };
   }, [authenticated]);
 
   const handleSend = (content: string) => {
-    if (!user || !content.trim()) {
-      return;
-    }
+    if (!user || !content.trim()) return;
 
-    const newMessage = {
-      id: Date.now().toString(),
-      sender: user,
-      content,
-      timestamp: new Date().toISOString(),
-    };
-
-    
-    socket.emit('sendMessage', newMessage);
+    // Отправляем только user и content
+    const messageData = { sender: user, content };
+    const socket: Socket = io(SOCKET_URL);
+    socket.emit('sendMessage', messageData);
+    socket.disconnect();
   };
+
+  if (authLoading) {
+    return null;
+  }
 
   if (!authenticated) {
     return <div> Пожалуйста авторизуйтесь.</div>;

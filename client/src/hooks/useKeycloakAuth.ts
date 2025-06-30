@@ -24,13 +24,13 @@ export function useKeycloakAuth(): KeycloakAuth {
     useEffect(() => {
         // проверка авторизации при загрузке страницы
         keycloak.init({ onLoad: 'login-required' })
-            .then((auth) => {
+            .then((auth: boolean) => {
                 setAuthenticated(auth);
                 if (auth) {
                     setUser(keycloak.tokenParsed?.preferred_username);
                 }
             })
-            .catch((err) => {
+            .catch((err: unknown) => {
                 console.error('Keycloak init failed', err);
             })
             .finally(() => {

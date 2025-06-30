@@ -5,6 +5,9 @@ import messagesRouter from './routes/messages';
 import { Server as SocketIOServer} from 'socket.io';
 import http from 'http';
 import {socketAuthMiddleware} from './middleware/socketAuthMiddleware';
+import { createServerMessage } from './utilsComponents/messageFactory';
+
+
 const app = express();
 // Создание HTTP-сервера
 const server = http.createServer(app);
@@ -46,6 +49,7 @@ io.use(socketAuthMiddleware(keycloak));
 io.on('connection', (socket) => {
     console.log(' Пользователь подключился к WebSocket');
     socket.on('sendMessage', (data) => {
+        const message = createServerMessage(data.sender, data.content);
         io.emit('newMessage', data);
     });
     socket.on('disconnect', () => {
