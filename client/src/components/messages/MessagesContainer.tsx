@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import MessagesInput from './MessagesInput';
-import MessageList from './MessageList';
-import { useKeycloakAuth } from '../../hooks/useKeycloakAuth';
-import io, { Socket } from 'socket.io-client';
+import React, { useEffect, useState } from "react";
+import MessagesInput from "./MessagesInput";
+import MessageList from "./MessageList";
+import io, { Socket } from "socket.io-client";
+import { useAuth } from "../../context/AuthContext"; 
 
 /*
 
@@ -21,22 +21,27 @@ export interface Message {
   timestamp: string;
 }
 
-const SOCKET_URL = 'http://localhost:3001'; 
+const SOCKET_URL = "http://localhost:3000";
 
 const MessagesContainer: React.FC = () => {
-  const { user, authenticated, loading: authLoading } = useKeycloakAuth();
+ const { user, authenticated, keycloakInstance } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
-  // Загрузка истории сообщен��й
+  
+  // Загрузка истории сообщений
   useEffect(() => {
     if (!authenticated) return;
 
     setLoading(true);
     setError(null);
-    fetch(`${SOCKET_URL}/api/messages`)
-      .then(res => {
+    fetch(`${SOCKET_URL}/api/messages`, { cache: "no-store" })
+      .then((res) => {
+        if (res.status === 304) {
+          return [];
+        }
         if (!res.ok) {
           throw new Error(`Ошибка загрузки: ${res.status} ${res.statusText}`);
         }
@@ -47,42 +52,41 @@ const MessagesContainer: React.FC = () => {
         setLoading(false);
       })
       .catch((error) => {
-        console.error(' Ошибка загрузки сообщений:', error);
-        setError(error.message || 'Ошибка загрузки сообщений');
+        console.error(" Ошибка загрузки сообщения:", error);
+        setError(error.message || "Ошибка загрузки сообщений");
         setLoading(false);
       });
   }, [authenticated]);
 
   // Работа с сокетом
   useEffect(() => {
-    if (!authenticated) return;
+    if (!authenticated || !keycloakInstance?.token) return;
 
-    const socket: Socket = io(SOCKET_URL);
-
-    socket.on('newMessage', (message: Message) => {
-      setMessages(prev => [...prev, message]);
+    const localSocket: Socket = io(SOCKET_URL, {
+      auth: {
+        token: keycloakInstance.token,
+      },
+    });
+ setSocket(localSocket);
+    localSocket.on("newMessage", (message: Message) => {
+      setMessages((prev) => [...prev, message]);
     });
 
     return () => {
-      socket.disconnect();
+      localSocket.disconnect();
     };
-  }, [authenticated]);
+  }, [authenticated, keycloakInstance?.token]);
 
   const handleSend = (content: string) => {
-    if (!user || !content.trim()) return;
+    if (!user || !content.trim() || !socket) return;
 
     // Отправляем только user и content
     const messageData = { sender: user, content };
-    const socket: Socket = io(SOCKET_URL);
-    socket.emit('sendMessage', messageData);
-    socket.disconnect();
+    
+    socket.emit("sendMessage", messageData);
+   
   };
 
-  if (authLoading) {
-    return null;
-  }
-
-  
   if (loading) {
     return <div>Загрузка сообщений...</div>;
   }
