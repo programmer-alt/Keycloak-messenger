@@ -1,5 +1,5 @@
 import React, {ReactNode } from 'react';
-import { useKeycloakAuth } from '../../hooks/useKeycloakAuth';
+import { useAuth } from '../../context/AuthContext';
 
 /**
  * AuthGate — компонент для проверки аутентификации пользователя через Keycloak.
@@ -8,21 +8,21 @@ import { useKeycloakAuth } from '../../hooks/useKeycloakAuth';
  */
 interface AuthGateProps {
     // пропс для проверки аутентификации
-    children: (user: string | undefined) => ReactNode;
+    children:  ReactNode;
 }
 
 export const AuthGate: React.FC<AuthGateProps> = ({ children }) => {
-    const { user, authenticated, loading } = useKeycloakAuth();
+    const { user, authenticated, loading } = useAuth();
 
     if(loading) {
-        return <div>Загрузка...</div>;
+        return <div>Проверка авторизации...</div>;
     }
     if(!authenticated) {
         return <div>Пожалуйста, войдите через Keycloak</div>;
     }
     return (
         <>
-            {children(user)}
+            {children}
         </>
     );
 }
