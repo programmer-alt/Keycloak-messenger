@@ -8,6 +8,8 @@ interface MessagesInputProps {
 const MessagesInput: React.FC<MessagesInputProps> = ({ onSend }) => {
   const [inputMessage, setInputMessage] = useState('');
 
+  
+
   const handleSend = () => {
     if (inputMessage.trim() === '') {
       return;
@@ -21,7 +23,7 @@ const MessagesInput: React.FC<MessagesInputProps> = ({ onSend }) => {
       handleSend();
     }
   };
-
+console.log('MessagesInput  рендерится');
   return (
     <div className="message-input">
       <input
