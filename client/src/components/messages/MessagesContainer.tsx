@@ -93,6 +93,9 @@ const MessagesContainer: React.FC = () => {
 
   return (
     <div className="messages-container">
+      <header className="chat-header" style={{ padding: '10px', borderBottom: '1px solid #ccc', textAlign: 'center' }}>
+{user && <h3> {user}! Добро пожаловать в чат, который создал Вадим!</h3>}
+        </header>
       <MessageList messages={messages} />
       <MessagesInput onSend={handleSend} />
     </div>
