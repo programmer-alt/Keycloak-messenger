@@ -2,17 +2,15 @@ import React from 'react';
 import { AuthGate } from './components/auth/AuthGate';
 import MessagesContainer from './components/messages/MessagesContainer';
 import './App.css';
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
+    <AuthProvider>
     <AuthGate>
-      {(user) => (
-        <div className="App">
-          <h1>Привет, {user}!</h1>
-          <MessagesContainer />
-        </div>
-      )}
-    </AuthGate>
+  <MessagesContainer />
+</AuthGate>
+    </AuthProvider>
   );
 }
 
