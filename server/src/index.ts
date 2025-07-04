@@ -35,7 +35,7 @@ app.use(express.json());
 
 const keycloak = initializeKeycloak(app);
 
-app.use('/messages', keycloak.protect() as any, messagesRouter);
+app.use('api/messages', keycloak.protect() as any, messagesRouter);
 
 app.get('/protected', keycloak.protect() as any, (req, res) => {
     res.json({
