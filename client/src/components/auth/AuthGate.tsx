@@ -1,5 +1,6 @@
 import React, {ReactNode } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import keycloak from '../../keycloakClient/keycloakInitClient';
 
 /**
  * AuthGate — компонент для проверки аутентификации пользователя через Keycloak.
@@ -14,10 +15,28 @@ interface AuthGateProps {
 export const AuthGate: React.FC<AuthGateProps> = ({ children }) => {
     const { user, authenticated, loading } = useAuth();
 
-    if(loading) {
+    const handleLogout = async () => {
+        // вызываем серверный endpoint для логаута
+        try {
+            await fetch('http://localhost:3000/logout', {
+                credentials: 'include'
+            });
+            // вызываем клиентский endpoint для логаута
+            keycloak.logout({
+                redirectUri: window.location.origin
+            });
+        } catch (error) {
+            console.error(' Ошибка при выходе:', error);
+            keycloak.logout({
+                redirectUri: window.location.origin
+            });
+        }
+    };
+
+    if (loading) {
         return <div>Проверка авторизации...</div>;
     }
-    if(!authenticated) {
+    if (!authenticated) {
         return <div>Пожалуйста, войдите через Keycloak</div>;
     }
     return (
@@ -25,4 +44,4 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children }) => {
             {children}
         </>
     );
-}
+};
