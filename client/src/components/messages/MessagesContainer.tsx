@@ -18,7 +18,8 @@ export interface Message {
   id: string;
   sender: string;
   content: string;
-  timestamp: string;
+  created_at: string;
+  timestamp?: string;
 }
 
 const SOCKET_URL = "http://localhost:3000";
@@ -79,7 +80,13 @@ const MessagesContainer: React.FC = () => {
     });
     setSocket(localSocket);
     localSocket.on("newMessage", (message: Message) => {
-      setMessages((prev) => [...prev, message]);
+      console.log('New message received via socket:', message);
+      // Преобразуем поле timestamp в created_at для унификации
+      const normalizedMessage = {
+        ...message,
+        created_at: message.timestamp ?? '',
+      };
+      setMessages((prev) => [...prev, normalizedMessage]);
     });
 
     return () => {
