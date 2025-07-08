@@ -23,7 +23,7 @@ const MessagesInput: React.FC<MessagesInputProps> = ({ onSend }) => {
       handleSend();
     }
   };
-console.log('MessagesInput  рендерится');
+
   return (
     <div className="message-input">
       <input
