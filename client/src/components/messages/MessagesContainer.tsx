@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import MessagesInput from "./MessagesInput";
 import MessageList from "./MessageList";
 import io, { Socket } from "socket.io-client";
-import { useAuth } from "../../context/AuthContext"; 
+import { useAuth } from "../../context/AuthContext";
 
 /*
 
@@ -24,20 +24,30 @@ export interface Message {
 const SOCKET_URL = "http://localhost:3000";
 
 const MessagesContainer: React.FC = () => {
- const { user, authenticated, keycloakInstance } = useAuth();
+  const { user, authenticated, keycloakInstance } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
 
-  
   // Загрузка истории сообщений
   useEffect(() => {
-    if (!authenticated) return;
-
+    if (!authenticated || !keycloakInstance?.token) {
+      console.log(
+        "Пользователь не аутентифицирован, загрузка сообщений отменена."
+      );
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
-    fetch(`${SOCKET_URL}/api/messages`, { cache: "no-store" })
+    fetch(`${SOCKET_URL}/api/messages`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${keycloakInstance.token}`,
+      },
+      cache: "no-store",
+    })
       .then((res) => {
         if (res.status === 304) {
           return [];
@@ -56,7 +66,7 @@ const MessagesContainer: React.FC = () => {
         setError(error.message || "Ошибка загрузки сообщений");
         setLoading(false);
       });
-  }, [authenticated]);
+  }, [authenticated, keycloakInstance]);
 
   // Работа с сокетом
   useEffect(() => {
@@ -67,7 +77,7 @@ const MessagesContainer: React.FC = () => {
         token: keycloakInstance.token,
       },
     });
- setSocket(localSocket);
+    setSocket(localSocket);
     localSocket.on("newMessage", (message: Message) => {
       setMessages((prev) => [...prev, message]);
     });
@@ -82,9 +92,8 @@ const MessagesContainer: React.FC = () => {
 
     // Отправляем только user и content
     const messageData = { sender: user, content };
-    
+
     socket.emit("sendMessage", messageData);
-   
   };
 
   if (loading) {
@@ -93,9 +102,18 @@ const MessagesContainer: React.FC = () => {
 
   return (
     <div className="messages-container">
-      <header className="chat-header" style={{ padding: '10px', borderBottom: '1px solid #ccc', textAlign: 'center' }}>
-{user && <h3> {user}! Добро пожаловать в чат, который создал Вадим!</h3>}
-        </header>
+      <header
+        className="chat-header"
+        style={{
+          padding: "10px",
+          borderBottom: "1px solid #ccc",
+          textAlign: "center",
+        }}
+      >
+        {user && (
+          <h3> {user}! Добро пожаловать в чат, который создал Вадим!</h3>
+        )}
+      </header>
       <MessageList messages={messages} />
       <MessagesInput onSend={handleSend} />
     </div>
