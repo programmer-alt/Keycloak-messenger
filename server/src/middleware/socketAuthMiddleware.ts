@@ -1,7 +1,7 @@
 import {  Socket } from 'socket.io';
 import Keycloak from 'keycloak-connect';
-/*
-    Middleware для проверки токена при подключении к сокету
+/** 
+  *  Middleware для проверки токена при подключении к сокету
 */
 export const socketAuthMiddleware = (keycloak: Keycloak.Keycloak) => async (socket: Socket, next: (err?: Error) => void) => {
     // получаем токен из авторизации
