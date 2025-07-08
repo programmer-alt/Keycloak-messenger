@@ -62,7 +62,7 @@ io.on('connection', (socket) => {
     console.log(' Пользователь подключился к WebSocket');
     socket.on('sendMessage', (data) => {
         const message = createServerMessage(data.sender, data.content);
-        io.emit('newMessage', data);
+        io.emit('newMessage', message);
     });
     socket.on('disconnect', () => {
         console.log('Пользователь отключился от WebSocket');
