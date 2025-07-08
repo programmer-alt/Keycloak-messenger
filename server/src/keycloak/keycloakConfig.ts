@@ -6,7 +6,7 @@
 
 export const keycloakConfig = {
         'realm': 'Messenger',
-        'auth-server-url': 'http://localhost:8080/auth',
+        'auth-server-url': 'http://localhost:8080',
         'ssl-required': 'external',
         'resource': 'MessengerClient',
          'credentials': {
