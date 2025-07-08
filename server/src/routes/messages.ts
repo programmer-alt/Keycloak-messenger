@@ -1,6 +1,7 @@
 import { Request, Response, Router } from "express";
-import pool from "../db";
 import { body, validationResult } from "express-validator";
+import { saveMessage } from "../utilsComponents/messageService";
+import pool from "../db";
 
 /**
  * Маршруты для работы с сообщениями
@@ -41,16 +42,10 @@ router.post(
         res.status(400).json({ error: "receiver_id и message обязательны" });
         return;
       }
-      // добавляем сообщение в базу
-      const query = `
-      INSERT INTO messages (sender_id, receiver_id, message, created_at)
-      VALUES ($1, $2, $3, NOW())
-      RETURNING *;
-    `;
-      // выполняем запрос в базе данных и возвращаем результат
-      const result = await pool.query(query, [senderId, receiver_id, message]);
+      // добавляем сообщение в базу через сервис
+      const savedMessage = await saveMessage(senderId, receiver_id, message);
 
-      res.status(201).json(result.rows[0]);
+      res.status(201).json(savedMessage);
     } catch (error) {
       console.error("Ошибка при отправке сообщения:", error);
       res.status(500).json({ error: "Ошибка сервера" });
