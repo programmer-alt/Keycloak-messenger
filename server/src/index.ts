@@ -53,6 +53,27 @@ app.get('/login', keycloak.protect() as any, (req, res) => {
         user: (req as any)?.kauth?.grant?.access_token?.content?.preferred_username,
     });
 });
+app.get('/logout', (req, res) => {
+    // Завершаем сессию Keycloak
+    if (req.session) {
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('Ошибка при завершении сессии:', err);
+                return res.status(500).json({ error: 'Ошибка при выходе' });
+            }
+            
+            res.json({
+                message: 'Вы успешно вышли из системы!',
+                redirectUrl: 'http://localhost:3001' // URL для перенаправления
+            });
+        });
+    } else {
+        res.json({
+            message: 'Сессия уже завершена',
+            redirectUrl: 'http://localhost:3001'
+        });
+    }
+});
 
 // Middleware для аутентификации socket.io
 io.use(socketAuthMiddleware(keycloak));
@@ -62,7 +83,7 @@ io.on('connection', (socket) => {
     console.log(' Пользователь подключился к WebSocket');
     socket.on('sendMessage', (data) => {
         const message = createServerMessage(data.sender, data.content);
-        io.emit('newMessage', data);
+        io.emit('newMessage', message);
     });
     socket.on('disconnect', () => {
         console.log('Пользователь отключился от WebSocket');
