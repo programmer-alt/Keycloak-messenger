@@ -79,11 +79,31 @@ app.get('/logout', (req, res) => {
 io.use(socketAuthMiddleware(keycloak));
 
 // 
+import pool from './db';
+
 io.on('connection', (socket) => {
     console.log(' Пользователь подключился к WebSocket');
-    socket.on('sendMessage', (data) => {
-        const message = createServerMessage(data.sender, data.content);
-        io.emit('newMessage', message);
+    socket.on('sendMessage', async (data) => {
+        try {
+            // Сохраняем сообщение в базу данных
+            const query = `
+                INSERT INTO messages (sender_id, receiver_id, message, created_at)
+                VALUES ($1, $2, $3, NOW())
+                RETURNING *;
+            `;
+            // Здесь предполагается, что data содержит sender, receiver_id и content
+            const senderId = data.sender;
+            const receiverId = data.receiver_id || 'some_user'; // если receiver_id не передан, можно задать дефолт
+            const messageContent = data.content;
+
+            const result = await pool.query(query, [senderId, receiverId, messageContent]);
+            const savedMessage = result.rows[0];
+
+            // Отправляем всем клиентам новое сообщение
+            io.emit('newMessage', savedMessage);
+        } catch (error) {
+            console.error('Ошибка при сохранении сообщения через WebSocket:', error);
+        }
     });
     socket.on('disconnect', () => {
         console.log('Пользователь отключился от WebSocket');
