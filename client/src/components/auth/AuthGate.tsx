@@ -41,6 +41,21 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children }) => {
     }
     return (
         <>
+        <div> 
+             <button 
+                onClick={handleLogout}
+                style={{ 
+                    padding: '8px 16px', 
+                    backgroundColor: '#dc3545', 
+                    color: 'white', 
+                    border: 'none', 
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                }}
+            >
+                Выйти c  чата 
+            </button>
+        </div>
             {children}
         </>
     );

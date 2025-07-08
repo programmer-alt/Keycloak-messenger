@@ -58,8 +58,15 @@ const MessagesContainer: React.FC = () => {
         }
         return res.json();
       })
-      .then((data: Message[]) => {
-        setMessages(data);
+      .then((data: any[]) => {
+        // Преобразуем поле message из API в content для клиента
+        const normalizedMessages = data.map(item => ({
+          id: item.id,
+          sender: item.sender_id,
+          content: item.message,
+          created_at: item.created_at,
+        }));
+        setMessages(normalizedMessages);
         setLoading(false);
       })
       .catch((error) => {
@@ -94,7 +101,38 @@ const MessagesContainer: React.FC = () => {
     };
   }, [authenticated, keycloakInstance?.token]);
 
-  const handleSend = (content: string) => {
+const handleSendMessage = async (content: string) => {
+    if (!user || !keycloakInstance?.token) return;
+    
+    try {
+        // Используем существующий REST API endpoint
+        const response = await fetch('http://localhost:3000/api/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${keycloakInstance.token}` // Keycloak токен
+            },
+            body: JSON.stringify({
+                receiver_id: 'some_user', // Указываем получателя
+                message: content         
+            })
+        });
+        
+        if (response.ok) {
+            const savedMessage = await response.json();
+            
+            // Обновляем локальное состояние
+            setMessages(prev => [savedMessage, ...prev]);
+            
+            // Опционально: уведомляем через WebSocket
+            socket?.emit('messageNotification', savedMessage);
+        }
+    } catch (error) {
+        console.error('Ошибка отправки:', error);
+        setError('Не удалось отправить сообщение');
+    }
+};
+  const handleSend = async (content: string) => {
     if (!user || !content.trim() || !socket) return;
 
     // Отправляем только user и content
