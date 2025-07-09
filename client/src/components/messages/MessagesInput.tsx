@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './cssMessages/MessageInput.css';
+import './cssMessages/messageInput.css';
 
 interface MessagesInputProps {
   onSend: (content: string) => void;
