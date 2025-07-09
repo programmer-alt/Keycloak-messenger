@@ -3,6 +3,7 @@ import MessagesInput from "./MessagesInput";
 import MessageList from "./MessageList";
 import io, { Socket } from "socket.io-client";
 import { useAuth } from "../../context/AuthContext";
+import './cssMessages/messagesContainer.css';
 
 /*
 
@@ -149,14 +150,9 @@ const handleSendMessage = async (content: string) => {
     <div className="messages-container">
       <header
         className="chat-header"
-        style={{
-          padding: "10px",
-          borderBottom: "1px solid #ccc",
-          textAlign: "center",
-        }}
       >
         {user && (
-          <h3> {user}! Добро пожаловать в чат, который создал Вадим!</h3>
+          <h3> Дорогой пользователь {user}! Welcome to чат, который создал Вадим!</h3>
         )}
       </header>
       <MessageList messages={messages} />
