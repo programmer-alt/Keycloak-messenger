@@ -1,0 +1,39 @@
+.message-list {
+  padding: 10px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* Расстояние между сообщениями */
+}
+
+.message-item {
+  padding: 10px 15px;
+  border-radius: 12px;
+  max-width: 70%;
+  background-color: #f1f0f0; /* Фоновый цвет для сообщений других пользователей */
+  align-self: flex-start; /* Сообщения по умолчанию слева */
+  word-wrap: break-word; /* Перенос длинных слов */
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.message-sender {
+  font-weight: bold;
+  color: #333;
+  font-size: 0.9em;
+}
+
+.message-timestamp {
+  font-size: 0.75em;
+  color: #888;
+  margin-left: 10px;
+}
+
+.message-content {
+  margin: 0;
+  color: #1c1c1c;
+}
