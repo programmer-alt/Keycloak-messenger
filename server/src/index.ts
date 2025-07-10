@@ -11,7 +11,7 @@ import {protectApi} from './middleware/apiAuth';
 import pool from './db';
 import { saveMessage } from './utilsComponents/messageService';
 import { registerMessageSocketHandler } from './webSocket/messageSocketHandler';
-
+import kcAdminClient from "./keycloak/keycloakAdminClient";
 
 const app = express();
 
@@ -78,7 +78,19 @@ app.get('/logout', (req, res) => {
         });
     }
 });
-
+app.get('/api/users', keycloak.protect(), async(req, res)=> {
+    try {
+        const users = await kcAdminClient.users.find();
+        const simplifieldUsers = users.map((user) => ({
+            id: user.id,
+            username: user.username,
+        }))
+        res.json(simplifieldUsers);
+    } catch (error) {
+        console.log(' Ошибка получения пользователей из Keycloak', error);
+        res.status(500).send(' Не удалось получить списко пользователей')
+    }
+})
 // Middleware для аутентификации socket.io
 io.use(socketAuthMiddleware(keycloak));
 
