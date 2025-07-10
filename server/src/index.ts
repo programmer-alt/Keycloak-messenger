@@ -11,8 +11,8 @@ import {protectApi} from './middleware/apiAuth';
 import pool from './db';
 import { saveMessage } from './utilsComponents/messageService';
 import { registerMessageSocketHandler } from './webSocket/messageSocketHandler';
-
-
+import { createKeycloakAdminClient } from "./keycloak/keycloakAdminClient";
+import { getAllUsers } from './services/keycloakUserService';
 const app = express();
 
 // Добавляем CORS middleware для Express
@@ -79,6 +79,15 @@ app.get('/logout', (req, res) => {
     }
 });
 
+app.get('/api/users', keycloak.protect(), async (req, res) => {
+    try {
+        const users = await getAllUsers();
+        res.json(users);
+    } catch (error) {
+        console.log('Ошибка получения пользователей из Keycloak', error);
+        res.status(500).send('Не удалось получить список пользователей');
+    }
+});
 // Middleware для аутентификации socket.io
 io.use(socketAuthMiddleware(keycloak));
 

@@ -1,164 +1,195 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import MessagesInput from "./MessagesInput";
 import MessageList from "./MessageList";
 import io, { Socket } from "socket.io-client";
 import { useAuth } from "../../context/AuthContext";
 import './cssMessages/messagesContainer.css';
+import  UserList from "./UserList";
 
-/*
-
-MessagesContainer — основной компонент чата.
-Проверяет авторизацию пользователя через Keycloak.
-При авторизации загружает историю сообщений с сервера и подписывается на новые сообщения через WebSocket (socket.io).
-Все новые сообщения (от других пользователей или себя) добавляются в список сообщений в реальном времени.
-Позволяет отправлять сообщения, которые сразу отправляются на сервер через сокет.
-Если пользователь не авторизован — отображает просьбу войти.
-Пока сообщения загружаются — показывает индикатор загрузки. 
-*/
-export interface Message {
+export interface User {
   id: string;
-  sender: string;
-  content: string;
-  created_at: string;
-  timestamp?: string;
+  username: string
+}
+// Интерфейс для сообщения на стороне клиента
+export interface Message {
+ id: string;
+ sender: string;
+ content: string;
+ created_at: string;
 }
 
+// Выносим URL в константу для удобства
 const SOCKET_URL = "http://localhost:3000";
 
+// Вспомогательная функция для приведения сообщений к единому формату
+// Принимает сообщение от REST API или от WebSocket
+const normalizeMessage = (rawMessage: any): Message => {
+ return {
+ id: rawMessage.id,
+ sender: rawMessage.sender_id || rawMessage.sender, // Поддержка обоих форматов
+ content: rawMessage.message || rawMessage.content, // 'message' от REST, 'content' от WebSocket
+ created_at: rawMessage.created_at || rawMessage.timestamp, // 'created_at' от REST, 'timestamp' от WebSocket
+ };
+};
+
 const MessagesContainer: React.FC = () => {
-  const { user, authenticated, keycloakInstance } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [socket, setSocket] = useState<Socket | null>(null);
+ const { authenticated, keycloakInstance } = useAuth();
+ const [messages, setMessages] = useState<Message[]>([]);
+ const [loading, setLoading] = useState(true);
+ const [error, setError] = useState<string | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+ //  Используем useRef для хранения экземпляра сокета
+ const socketRef = useRef<Socket | null>(null);
 
-  // Загрузка истории сообщений
-  useEffect(() => {
-    if (!authenticated || !keycloakInstance?.token) {
-      console.log(
-        "Пользователь не аутентифицирован, загрузка сообщений отменена."
-      );
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    fetch(`${SOCKET_URL}/api/messages`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${keycloakInstance.token}`,
-      },
-      cache: "no-store",
-    })
-      .then((res) => {
-        if (res.status === 304) {
-          return [];
-        }
-        if (!res.ok) {
-          throw new Error(`Ошибка загрузки: ${res.status} ${res.statusText}`);
-        }
-        return res.json();
+ // Загружаем список пользователей при монтировании
+useEffect(() => {
+    if (authenticated && keycloakInstance?.token) {
+      fetch(`${SOCKET_URL}/api/users`, { // Наш новый эндпоинт
+        headers: {
+          'Authorization': `Bearer ${keycloakInstance.token}`,
+        },
       })
-      .then((data: any[]) => {
-        // Преобразуем поле message из API в content для клиента
-        const normalizedMessages = data.map(item => ({
-          id: item.id,
-          sender: item.sender_id,
-          content: item.message,
-          created_at: item.created_at,
-        }));
-        setMessages(normalizedMessages);
-        setLoading(false);
+      .then(res => res.json())
+      .then(data => {
+        // Фильтруем самого себя из списка, чтобы не писать самому себе
+        const otherUsers = data.filter((u: User) => u.id !== keycloakInstance?.subject);
+        setUsers(otherUsers);
       })
-      .catch((error) => {
-        console.error(" Ошибка загрузки сообщения:", error);
-        setError(error.message || "Ошибка загрузки сообщений");
-        setLoading(false);
-      });
-  }, [authenticated, keycloakInstance]);
-
-  // Работа с сокетом
-  useEffect(() => {
-    if (!authenticated || !keycloakInstance?.token) return;
-
-    const localSocket: Socket = io(SOCKET_URL, {
-      auth: {
-        token: keycloakInstance.token,
-      },
-    });
-    setSocket(localSocket);
-    localSocket.on("newMessage", (message: Message) => {
-      console.log('New message received via socket:', message);
-      // Преобразуем поле timestamp в created_at для унификации
-      const normalizedMessage = {
-        ...message,
-        created_at: message.timestamp ?? '',
-      };
-      setMessages((prev) => [...prev, normalizedMessage]);
-    });
-
-    return () => {
-      localSocket.disconnect();
-    };
-  }, [authenticated, keycloakInstance?.token]);
-
-const handleSendMessage = async (content: string) => {
-    if (!user || !keycloakInstance?.token) return;
-    
-    try {
-        // Используем существующий REST API endpoint
-        const response = await fetch('http://localhost:3000/api/messages', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${keycloakInstance.token}` // Keycloak токен
-            },
-            body: JSON.stringify({
-                receiver_id: 'some_user', // Указываем получателя
-                message: content         
-            })
-        });
-        
-        if (response.ok) {
-            const savedMessage = await response.json();
-            
-            // Обновляем локальное состояние
-            setMessages(prev => [savedMessage, ...prev]);
-            
-            // Опционально: уведомляем через WebSocket
-            socket?.emit('messageNotification', savedMessage);
-        }
-    } catch (error) {
-        console.error('Ошибка отправки:', error);
-        setError('Не удалось отправить сообщение');
+      .catch(console.error);
     }
-};
-  const handleSend = async (content: string) => {
-    if (!user || !content.trim() || !socket) return;
+  }, [authenticated, keycloakInstance]); 
+ // Загрузка истории сообщений
+ useEffect(() => {
+ if (!authenticated || !keycloakInstance?.token) {
+ setLoading(false);
+ return;
+ }
+ 
+ setLoading(true);
+ setError(null);
+ 
+ fetch(`${SOCKET_URL}/api/messages`, {
+ method: "GET",
+ headers: {
+ Authorization: `Bearer ${keycloakInstance.token}`,
+ },
+ cache: "no-store",
+ })
+ .then((res) => {
+ if (!res.ok) {
+ throw new Error(`Ошибка загрузки: ${res.status} ${res.statusText}`);
+ }
+ return res.json();
+ })
+ .then((data: any[]) => {
+ // ШАГ 3: Используем единую функцию для нормализации
+ const normalizedMessages = data.map(normalizeMessage);
+ setMessages(normalizedMessages);
+ })
+ .catch((error) => {
+ console.error("Ошибка загрузки сообщений:", error);
+ setError(error.message || "Не удалось загрузить сообщения");
+ })
+ .finally(() => {
+ setLoading(false);
+ });
+ 
+ }, [authenticated, keycloakInstance]);
 
-    // Отправляем только user и content
-    const messageData = { sender: user, content };
+ // Управление WebSocket соединением
+ useEffect(() => {
+ if (!authenticated || !keycloakInstance?.token) {
+ // Если пользователь разлогинился, отключаем сокет
+ if (socketRef.current) {
+ socketRef.current.disconnect();
+ socketRef.current = null;
+ }
+ return;
+ }
 
-    socket.emit("sendMessage", messageData);
-  };
+ // Подключаемся только если еще не подключены
+ if (!socketRef.current) {
+ const newSocket = io(SOCKET_URL, {
+ auth: {
+ token: keycloakInstance.token,
+ },
+ });
+ 
+ socketRef.current = newSocket;
 
-  if (loading) {
-    return <div>Загрузка сообщений...</div>;
-  }
+ newSocket.on("newMessage", (message: any) => {
+ console.log('Получено новое сообщение:', message);
+ // ШАГ 3: Используем единую функцию для нормализации
+ const normalized = normalizeMessage(message);
+ setMessages((prevMessages) => [...prevMessages, normalized]);
+ });
+ }
 
-  return (
-    <div className="messages-container">
-      <header
-        className="chat-header"
-      >
-        {user && (
-          <h3> Дорогой пользователь {user}! Welcome to чат, который создал Вадим!</h3>
-        )}
-      </header>
-      <MessageList messages={messages} />
-      <MessagesInput onSend={handleSend} />
+ // Функция для очистки при размонтировании компонента
+ return () => {
+ if (socketRef.current) {
+ socketRef.current.disconnect();
+ socketRef.current = null;
+ }
+ };
+ }, [authenticated, keycloakInstance?.token]); // Зависимость от токена для переподключения при его обновлении
+
+//   функция отправки
+ const handleSendMessage = (content: string) => {
+ if (!content.trim() || !socketRef.current || !selectedUserId) return;
+
+ const messagePayload = {
+  recipientId: selectedUserId,
+   content: content,
+ }
+ // Отправляем на сервер только текст сообщения
+ // Сервер сам определит отправителя по токену сокета
+ socketRef.current.emit("sendMessage", messagePayload);
+ };
+
+ if (!authenticated) {
+ return <div>Пожалуйста, войдите, чтобы увидеть сообщения.</div>;
+ }
+ 
+ if (loading) {
+ return <div>Загрузка сообщений...</div>;
+ }
+ 
+ // ШАГ 4: Отображение ошибки
+ if (error) {
+ return <div className="error-message">Ошибка: {error}</div>;
+ }
+
+return (
+  <div className="app-container"> {/* Общий контейнер */}
+    <div className="user-list-container">
+      <h3>Пользователи</h3>
+      <UserList 
+        users={users} 
+        selectedUserId={selectedUserId}
+        onSelectUser={setSelectedUserId} 
+      />
     </div>
-  );
-};
 
+    <div className="messages-container">
+      {selectedUserId ? (
+        <>
+          <header className="chat-header">
+            {/* Можно найти имя выбранного пользователя и показать его */}
+            <h3>Чат с {users.find(u => u.id === selectedUserId)?.username}</h3>
+          </header>
+          {/* Здесь нужно будет фильтровать сообщения для selectedUserId */}
+          <MessageList messages={messages} /> 
+          <MessagesInput onSend={handleSendMessage} />
+        </>
+      ) : (
+        <div className="no-chat-selected">
+          Пожалуйста, выберите пользователя, чтобы начать чат.
+        </div>
+      )}
+    </div>
+  </div>
+);
+};
 export default MessagesContainer;

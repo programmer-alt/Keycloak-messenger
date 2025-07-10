@@ -1,6 +1,7 @@
 import React from 'react';
 import { Message } from './MessagesContainer';
-import './cssMessages/messageList.css';
+import './cssMessages/мessageList.css';
+
 import { format, parseISO } from 'date-fns';
 /*
   Комопнент отвечающий за отображение списка сообщений.
