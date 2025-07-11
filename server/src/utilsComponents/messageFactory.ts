@@ -1,5 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
 
+/**
+ * createServerMessage - Функция для создания сообщения на стороне сервера
+ *  @param sender - Отправитель сообщения 
+ *  @param content - Текст сообщения 
+ *  @returns Созданное сообщение
+ */
 export interface ServerMessage {
     id: string;
     sender: string;
