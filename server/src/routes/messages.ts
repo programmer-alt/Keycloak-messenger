@@ -1,6 +1,6 @@
 import { Request, Response, Router } from "express";
 import { body, validationResult } from "express-validator";
-import { saveMessage } from "../utilsComponents/messageService";
+import { saveMessage, clearUserMessages } from "../utilsComponents/messageService";
 import pool from "../db";
 
 /**
@@ -71,6 +71,23 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     res.json(result.rows);
   } catch (error) {
     console.error("Ошибка при получении сообщений:", error);
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
+});
+
+// Очистка всех сообщений пользователя
+router.delete("/", async (req: Request, res: Response): Promise<void> => {
+  try {
+    // получаем id пользователя из токена
+    const userId: string = (req as any).kauth.grant.access_token.content
+      .preferred_username;
+
+    // очищаем все сообщения пользователя через сервис
+    const deletedCount = await clearUserMessages(userId);
+
+    res.json({ success: true, message: `Удалено ${deletedCount} сообщений` });
+  } catch (error) {
+    console.error("Ошибка при очистке сообщений:", error);
     res.status(500).json({ error: "Ошибка сервера" });
   }
 });
