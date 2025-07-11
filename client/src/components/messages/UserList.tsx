@@ -1,4 +1,5 @@
 import React from "react";
+import './cssMessages/userList.css';
 
 // Описываем типы для данных, которые компонент получает
 interface User {
