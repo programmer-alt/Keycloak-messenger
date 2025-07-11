@@ -1,14 +1,15 @@
 import { Socket } from 'socket.io';
 import Keycloak from 'keycloak-connect';
 
+/**
+ * Задачи socketAuthMiddleware * - Проверка токена * - Извлечение ID пользователя из токена *
+ * - Проверка существования пользователя * - Возвращение ID пользователя* - Middleware для проверки токена при подключении к сокету
+ */
 // Расширяем тип Socket, чтобы TypeScript знал о поле `userId`
 export interface AuthenticatedSocket extends Socket {
     userId?: string;
 }
 
-/**
- * Middleware для проверки токена при подключении к сокету
- */
 export const socketAuthMiddleware = (keycloak: Keycloak.Keycloak) => async (socket: AuthenticatedSocket, next: (err?: Error) => void) => {
     // получаем токен из авторизации
     const { token } = socket.handshake.auth;
@@ -29,7 +30,7 @@ export const socketAuthMiddleware = (keycloak: Keycloak.Keycloak) => async (sock
 
         
         socket.userId = userInfo.sub;
-        // -------------------------
+        
 
         next(); 
     } catch (err) {
