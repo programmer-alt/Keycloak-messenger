@@ -1,6 +1,6 @@
 import React from 'react';
 import { Message } from './MessagesContainer';
-import './cssMessages/мessageList.css';
+import './cssMessages/messageList.css';
 
 import { format, parseISO } from 'date-fns';
 /*

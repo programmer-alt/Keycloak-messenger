@@ -9,7 +9,7 @@ interface RequestWithKauth extends Request {
   };
 }
 /**
- * protectApi — это функция, которая создаёт middleware для Express.
+ * protectApi — это функция для REST API запросов, которая создаёт middleware для Express.
 Этот middleware:
 Проверяет, авторизован ли пользователь через Keycloak.
 Если не авторизован — возвращает ошибку 401.

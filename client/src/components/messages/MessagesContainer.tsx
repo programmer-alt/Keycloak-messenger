@@ -39,6 +39,7 @@ const MessagesContainer: React.FC = () => {
  const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [clearingMessages, setClearingMessages] = useState(false);
  //  Используем useRef для хранения экземпляра сокета
  const socketRef = useRef<Socket | null>(null);
 
@@ -105,6 +106,7 @@ useEffect(() => {
  socketRef.current.disconnect();
  socketRef.current = null;
  }
+-    setMessages([]);
  return;
  }
 
@@ -148,6 +150,21 @@ useEffect(() => {
  socketRef.current.emit("sendMessage", messagePayload);
  };
 
+ // функция очистки всех сообщений
+ const handleClearMessages = () => {
+   if (!socketRef.current) return;
+
+   // Устанавливаем состояние загрузки
+   setClearingMessages(true);
+
+   // Отправляем запрос на очистку сообщений через WebSocket
+   socketRef.current.emit("clearMessages");
+
+   // Очищаем локальные сообщения
+   setMessages([]);
+   setClearingMessages(false);
+ };
+
  if (!authenticated) {
  return <div>Пожалуйста, войдите, чтобы увидеть сообщения.</div>;
  }
@@ -178,6 +195,13 @@ return (
           <header className="chat-header">
             {/* Можно найти имя выбранного пользователя и показать его */}
             <h3>Чат с {users.find(u => u.id === selectedUserId)?.username}</h3>
+            <button 
+              className="clear-messages-btn" 
+              onClick={handleClearMessages}
+              disabled={clearingMessages}
+            >
+              {clearingMessages ? "Очистка..." : "Очистить сообщения"}
+            </button>
           </header>
           {/* Здесь нужно будет фильтровать сообщения для selectedUserId */}
           <MessageList messages={messages} /> 
