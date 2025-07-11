@@ -1,5 +1,66 @@
+.app-container {
+  display: flex;
+  height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
+  background-color: #f9f9f9;
+}
+
+.user-list-container {
+  width: 250px;
+  border-right: 1px solid #ddd;
+  padding-right: 15px;
+  overflow-y: auto;
+}
+
+.messages-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-left: 15px;
+  overflow-y: auto;
+}
+
 .chat-header {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.clear-messages-btn {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.clear-messages-btn:hover {
+  background-color: #d32f2f;
+}
+
+.clear-messages-btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.no-chat-selected {
+  color: #666;
+  font-style: italic;
+  padding: 20px;
+}
+
+.error-message {
+  color: red;
   padding: 10px;
-  border-bottom: 1px solid #ccc;
-  text-align: center;
+  background-color: #ffe6e6;
+  border: 1px solid red;
+  border-radius: 4px;
+  margin: 10px 0;
 }
