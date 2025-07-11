@@ -24,3 +24,18 @@ export async function saveMessage(senderId: string, receiverId: string, messageC
   const result = await pool.query(query, [senderId, receiverId, messageContent]);
   return result.rows[0];
 }
+
+/**
+ * Очищает все сообщения пользователя.
+ * @param userId - ID пользователя, чьи сообщения нужно удалить
+ * @returns количество удаленных сообщений
+ */
+export async function clearUserMessages(userId: string): Promise<number> {
+  const query = `
+    DELETE FROM messages
+    WHERE sender_id = $1 OR receiver_id = $1
+    RETURNING *;
+  `;
+  const result = await pool.query(query, [userId]);
+  return result.rowCount || 0; // Возвращаем 0, если result.rowCount равен null
+}
