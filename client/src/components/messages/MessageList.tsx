@@ -1,5 +1,5 @@
 import React from 'react';
-import { Message } from './MessagesContainer';
+import { Message, User } from './MessagesContainer';
 import './cssMessages/messageList.css';
 
 import { format, parseISO } from 'date-fns';
@@ -8,27 +8,50 @@ import { format, parseISO } from 'date-fns';
 */
 interface MessageListProps {
   messages: Message[];
+  users: User[];
 }
-
-const MessageList: React.FC<MessageListProps> = ({ messages }) => {
-  const formatTimestamp =(timestamp: string | undefined) =>{
-    console.log('Timestamp for formatting:', timestamp);
+const MessageList: React.FC<MessageListProps> = ({ messages, users }) => {
+  const formatTimestamp = (timestamp: string | undefined) => {
+    console.log('Время:', timestamp);
     if (!timestamp) {
       return '';
     }
     try {
       const date = parseISO(timestamp);
       return format(date, 'HH:mm');
-    } catch (error){
+    } catch (error) {
       console.error(' Не удалось отформатировать дату-', timestamp, error);
-   return '';
+      return '';
     }
   };
+
+  console.log('Users in MessageList:', users ?? 'undefined');
+  console.log('Messages in MessageList:', messages);
+
+  // Выводим весь массив пользователей для анализа
+  console.log('Full users array:', users);
+
+  const getUserName = (senderId: string) => {
+    console.log('Looking for user with id or username:', senderId);
+    if (!users) {
+      console.warn('Users array is undefined');
+      return senderId;
+    }
+    // Сначала ищем по id
+    let user = users.find(u => u.id === senderId);
+    if (!user) {
+      // Если не нашли, ищем по username
+      user = users.find(u => u.username === senderId);
+    }
+    console.log('Found user:', user);
+    return user ? user.username : senderId;
+  };
+
   return (
     <div className="message-list">
       {messages.map((message, index) => (
         <div key={message.id ?? index} className="message-item">
-          <span className="message-sender">{message.sender}</span>
+          <span className="message-sender">{getUserName(message.sender)}</span>
           <p className="message-content">{message.content}</p>
           <span className="message-timestamp">
             {formatTimestamp(message.created_at)}
@@ -38,5 +61,4 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
     </div>
   );
 };
-
 export default MessageList;
