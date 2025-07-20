@@ -1,95 +1,58 @@
 import { Server as SocketIOServer } from "socket.io";
-import { saveMessage, clearUserMessages } from "../utilsComponents/messageService";
 import { AuthenticatedSocket } from "../middleware/socketAuthMiddleware";
-
-/**
- * Компонент ответственный  за обработку сообщений через WebSocket
- */
-// Карта для хранения соответствия userId -> socketId
-const userSocketMap = new Map<string, string>();
-
-interface ClientMessageData {
-  recipientId: string;
-  content: string;
-}
+import { clearUserMessages, saveMessage } from "../utilsComponents/messageService";
 
 export function registerMessageSocketHandler(io: SocketIOServer) {
   io.on("connection", (socket: AuthenticatedSocket) => {
-    console.log(
-      `Пользователь подключился к WebSocket Socket ID: ${socket.id}, User ID: ${socket.userId}`
-    );
-
-    if (socket.userId) {
-      userSocketMap.set(socket.userId, socket.id);
-    }
-
-    socket.on("sendMessage", async (data: ClientMessageData) => {
-      try {
-        const senderId = socket.userId;
-
-        if (!senderId) {
-          throw new Error(
-            "Критическая ошибка: ID пользователя отсутствует в аутентифицированном сокете."
-          );
-        }
-
-        const { recipientId, content } = data;
-
-        // Сохраняем сообщение
-        const savedMessage = await saveMessage(senderId, recipientId, content);
-
-        // Получаем socketId получателя из карты
-        const recipientSocketId = userSocketMap.get(recipientId);
-
-        // Отправляем сообщение получателю, если он онлайн
-        if (recipientSocketId) {
-          io.to(recipientSocketId).emit("newMessage", savedMessage);
-        }
-
-        // Отправляем сообщение обратно отправителю
-        socket.emit("newMessage", savedMessage);
-      } catch (error) {
-        console.error(
-          "Ошибка при сохранении сообщения через WebSocket:",
-          error
-        );
-        socket.emit("message_error", "Не удалось отправить сообщение");
-      }
-    });
-
-    // Обработчик события очистки сообщений
+    
     socket.on("clearMessages", async () => {
       try {
         const userId = socket.userId;
-
+        
         if (!userId) {
-          throw new Error(
-            "Критическая ошибка: ID пользователя отсутствует в аутентифицированном сокете."
-          );
+          throw new Error("ID пользователя отсутствует");
         }
 
-        // Очищаем сообщения пользователя
+        console.log(`Очистка сообщений для пользователя: ${userId}`);
+        
         const deletedCount = await clearUserMessages(userId);
-
-        // Отправляем уведомление самому пользователю
-        socket.emit("messagesCleared", { success: true, count: deletedCount });
-
-        // Также можно оповестить других пользователей, с которыми был чат
-        // Но для этого нужно знать, с кем именно были сообщения
-        // Здесь можно либо отправить всем, либо найти в базе данных соответствующих собеседников
-
-        console.log(`Пользователь ${userId} очистил ${deletedCount} сообщений`);
+        
+        // Отправляем подтверждение клиенту
+        socket.emit("messagesCleared", { 
+          success: true, 
+          count: deletedCount 
+        });
+        
+        console.log(`Удалено ${deletedCount} сообщений для пользователя ${userId}`);
       } catch (error) {
-        console.error("Ошибка при очистке сообщений через WebSocket:", error);
+        console.error("Ошибка при очистке сообщений:", error);
         socket.emit("clearMessages_error", "Не удалось очистить сообщения");
       }
     });
 
-    socket.on("disconnect", () => {
-      if (socket.userId) {
-        userSocketMap.delete(socket.userId);
+    // Добавляем обработчик отправки сообщений
+    socket.on("sendMessage", async (messagePayload: { recipientId: string; content: string }) => {
+      try {
+        const senderId = socket.userId;
+        if (!senderId) {
+          throw new Error("ID отправителя отсутствует");
+        }
+        const { recipientId, content } = messagePayload;
+        if (!recipientId || !content) {
+          throw new Error("Получатель и содержимое сообщения обязательны");
+        }
+
+        // Сохраняем сообщение в базе
+        const savedMessage = await saveMessage(senderId, recipientId, content);
+
+        // Отправляем новое сообщение всем подключенным клиентам
+        io.emit("newMessage", savedMessage);
+
+        console.log(`Новое сообщение от ${senderId} к ${recipientId}: ${content}`);
+      } catch (error) {
+        console.error("Ошибка при отправке сообщения:", error);
+        socket.emit("sendMessage_error", "Не удалось отправить сообщение");
       }
-      console.log("Пользователь отключился от WebSocket");
     });
   });
 }

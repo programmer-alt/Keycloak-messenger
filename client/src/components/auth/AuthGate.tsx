@@ -13,7 +13,7 @@ interface AuthGateProps {
 }
 
 export const AuthGate: React.FC<AuthGateProps> = ({ children }) => {
-    const { user, authenticated, loading } = useAuth();
+    const { authenticated, loading } = useAuth();
 
     const handleLogout = async () => {
         // вызываем серверный endpoint для логаута

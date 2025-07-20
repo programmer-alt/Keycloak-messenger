@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
 
+//инициализируем переменные среды
 dotenv.config({ path: '.envServer'});
 class Database {
   private static instance: Pool;
