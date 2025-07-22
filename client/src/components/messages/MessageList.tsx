@@ -37,11 +37,15 @@ const MessageList: React.FC<MessageListProps> = ({ messages, users }) => {
       console.warn('Users array is undefined');
       return senderId;
     }
-    // Сначала ищем по id
+    // Сначала ищем по id строго
     let user = users.find(u => u.id === senderId);
     if (!user) {
       // Если не нашли, ищем по username
       user = users.find(u => u.username === senderId);
+    }
+    // Если user не найден, попробуем найти по id в нижнем регистре (на случай несоответствия регистра)
+    if (!user) {
+      user = users.find(u => u.id.toLowerCase() === senderId.toLowerCase());
     }
     console.log('Found user:', user);
     return user ? user.username : senderId;

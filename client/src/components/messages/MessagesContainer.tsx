@@ -15,12 +15,12 @@ export interface Message {
   id: string;
   sender: string;
   content: string;
+  receiver_id: string;
   created_at: string;
 }
 
 // Выносим URL в константу для удобства
 const SOCKET_URL = "http://localhost:3000";
-
 
 const MessagesContainer: React.FC = () => {
   const { authenticated, keycloakInstance } = useAuth();
@@ -33,12 +33,14 @@ const MessagesContainer: React.FC = () => {
   //  Используем useRef для хранения экземпляра сокета
   const socketRef = useRef<Socket | null>(null);
 
-   const normalizeMessage = (rawMessage: any): Message => {
-    const senderUser = users.find(user => user.id === rawMessage.sender_id);
+  const normalizeMessage = (rawMessage: any): Message => {
+    const senderId = rawMessage.sender_id || rawMessage.sender;
+    const senderUser = users.find((user) => user.id === senderId);
     return {
       id: rawMessage.id,
-      sender: senderUser?.username || rawMessage.sender_id,
+      sender: senderUser?.username || senderId,
       content: rawMessage.message || rawMessage.content,
+      receiver_id: rawMessage.receiver_id,
       created_at: rawMessage.created_at || rawMessage.timestamp,
     };
   };
@@ -47,18 +49,13 @@ const MessagesContainer: React.FC = () => {
   useEffect(() => {
     if (authenticated && keycloakInstance?.token) {
       fetch(`${SOCKET_URL}/api/users`, {
-        // Наш новый эндпоинт
         headers: {
           Authorization: `Bearer ${keycloakInstance.token}`,
         },
       })
         .then((res) => res.json())
         .then((data) => {
-          // Фильтруем самого себя из списка, чтобы не писать самому себе
-          const otherUsers = data.filter(
-            (u: User) => u.id !== keycloakInstance?.subject
-          );
-          setUsers(otherUsers);
+          setUsers(data);
         })
         .catch(console.error);
     }
@@ -101,55 +98,55 @@ const MessagesContainer: React.FC = () => {
   }, [authenticated, keycloakInstance]);
 
   // Управление WebSocket соединением
-// Управление WebSocket соединением
-useEffect(() => {
-  if (!authenticated || !keycloakInstance?.token) {
-    if (socketRef.current) {
-      socketRef.current.disconnect();
-      socketRef.current = null;
-    }
-    setMessages([]);
-    return;
-  }
-
-  if (!socketRef.current) {
-    const newSocket = io(SOCKET_URL, {
-      auth: {
-        token: keycloakInstance.token,
-      },
-    });
-
-    socketRef.current = newSocket;
-
-    newSocket.on("newMessage", (message: any) => {
-      console.log("Получено новое сообщение:", message);
-      const normalized = normalizeMessage(message);
-      setMessages((prevMessages) => [...prevMessages, normalized]);
-    });
-
-    // Обработчик успешной очистки сообщений
-    newSocket.on("messagesCleared", (response) => {
-      console.log("Сообщения успешно очищены:", response);
-      if (response.success) {
-        setMessages([]);
-        setClearingMessages(false);
+  // Управление WebSocket соединением
+  useEffect(() => {
+    if (!authenticated || !keycloakInstance?.token) {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
       }
-    });
-
-    // Обработчик ошибки очистки
-    newSocket.on("clearMessages_error", (error) => {
-      console.error("Ошибка очистки сообщений:", error);
-      setClearingMessages(false);
-    });
-  }
-
-  return () => {
-    if (socketRef.current) {
-      socketRef.current.disconnect();
-      socketRef.current = null;
+      setMessages([]);
+      return;
     }
-  };
-}, [authenticated, keycloakInstance?.token, users]);
+
+    if (!socketRef.current) {
+      const newSocket = io(SOCKET_URL, {
+        auth: {
+          token: keycloakInstance.token,
+        },
+      });
+
+      socketRef.current = newSocket;
+
+      newSocket.on("newMessage", (message: any) => {
+        console.log("Получено новое сообщение:", message);
+        const normalized = normalizeMessage(message);
+        setMessages((prevMessages) => [...prevMessages, normalized]);
+      });
+
+      // Обработчик успешной очистки сообщений
+      newSocket.on("messagesCleared", (response) => {
+        console.log("Сообщения успешно очищены:", response);
+        if (response.success) {
+          setMessages([]);
+          setClearingMessages(false);
+        }
+      });
+
+      // Обработчик ошибки очистки
+      newSocket.on("clearMessages_error", (error) => {
+        console.error("Ошибка очистки сообщений:", error);
+        setClearingMessages(false);
+      });
+    }
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, [authenticated, keycloakInstance?.token, users]);
 
   //   функция отправки
   const handleSendMessage = (content: string) => {
@@ -173,7 +170,16 @@ useEffect(() => {
 
     // Отправляем запрос на очистку сообщений через WebSocket
     socketRef.current.emit("clearMessages");
-
+  };
+   const getFilteredMessages = () => {
+    if (!selectedUserId || !keycloakInstance?.tokenParsed?.sub) return [];
+    const myUserId = keycloakInstance.tokenParsed.sub;
+    // В messages должны быть поля recipientId и sender (username или UUID)
+    return messages.filter(
+  (msg) =>
+    (msg.sender === users.find(u => u.id === selectedUserId)?.username && msg.receiver_id === myUserId) ||
+    (msg.sender === users.find(u => u.id === myUserId)?.username && msg.receiver_id === selectedUserId)
+);
   };
 
   if (!authenticated) {
@@ -218,7 +224,7 @@ useEffect(() => {
               </button>
             </header>
             {/* Здесь нужно будет фильтровать сообщения для selectedUserId */}
-            <MessageList messages={messages} users={users} />
+            <MessageList messages={getFilteredMessages()} users={users} />
             <MessagesInput onSend={handleSendMessage} />
           </>
         ) : (
