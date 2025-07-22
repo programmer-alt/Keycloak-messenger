@@ -28,8 +28,8 @@ export const socketAuthMiddleware =
         if (!tokenContent){
             return next(new Error(" Ошибка авторизации: неверный токен"))
         }
-        // Устанавливаем userId для совместимости с REST API
-        socket.userId = tokenContent.preferred_username || tokenContent.sub;
+        // Устанавливаем userId как UUID (sub) для унификации
+        socket.userId = tokenContent.sub || tokenContent.preferred_username;
            // Сохраняем декодированный токен для совместимости с userSocketHandler
            (socket as any).decoded_token = tokenContent
            console.log(`WebSocket авторизация успешна для пользователя ${socket.userId}`)
