@@ -34,8 +34,8 @@ router.post(
   async (req: Request, res: Response): Promise<void> => {
     try {
       // получаем id пользователя из токена
-      // Возвращаем использование preferred_username для совместимости
-      const senderId: string = (req as any).kauth.grant.access_token.content.preferred_username;
+    // Используем sub (UUID) для идентификации отправителя
+    const senderId: string = (req as any).kauth.grant.access_token.content.sub;
       // получаем id получателя и текст сообщения
       const { receiver_id, message } = req.body;
 
@@ -58,8 +58,8 @@ router.post(
 router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
     // получаем id пользователя из токена
-    // Возвращаем использование preferred_username для совместимости
-    const userId: string = (req as any).kauth.grant.access_token.content.preferred_username;
+    // Используем sub (UUID) для идентификации пользователя
+    const userId: string = (req as any).kauth.grant.access_token.content.sub;
     // получаем все сообщения пользователя из базы данных
     const query = `
       SELECT * FROM messages
@@ -80,8 +80,8 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 router.delete("/", async (req: Request, res: Response): Promise<void> => {
   try {
     // получаем id пользователя из токена
-    // Возвращаем использование preferred_username для совместимости
-    const userId: string = (req as any).kauth.grant.access_token.content.preferred_username;
+    // Используем sub (UUID) для идентификации пользователя
+    const userId: string = (req as any).kauth.grant.access_token.content.sub;
 
     // очищаем все сообщения пользователя через сервис
     const deletedCount = await clearUserMessages(userId);
