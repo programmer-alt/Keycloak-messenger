@@ -62,11 +62,14 @@ const MessagesContainer: React.FC = () => {
   }, [authenticated, keycloakInstance]);
   // Загрузка истории сообщений
   useEffect(() => {
-    if (!authenticated || !keycloakInstance?.token || users.length === 0) {
+    if (!authenticated || !keycloakInstance?.token ) {
       setLoading(false);
       return;
     }
-
+if (users.length === 0) {
+  setLoading(true);
+  return;
+}
     setLoading(true);
     setError(null);
 
@@ -95,9 +98,8 @@ const MessagesContainer: React.FC = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, [authenticated, keycloakInstance]);
+  }, [authenticated, keycloakInstance, users]);
 
-  // Управление WebSocket соединением
   // Управление WebSocket соединением
   useEffect(() => {
     if (!authenticated || !keycloakInstance?.token) {
@@ -171,15 +173,19 @@ const MessagesContainer: React.FC = () => {
     // Отправляем запрос на очистку сообщений через WebSocket
     socketRef.current.emit("clearMessages");
   };
-   const getFilteredMessages = () => {
+ const getFilteredMessages = () => {
     if (!selectedUserId || !keycloakInstance?.tokenParsed?.sub) return [];
     const myUserId = keycloakInstance.tokenParsed.sub;
-    // В messages должны быть поля recipientId и sender (username или UUID)
+    if (selectedUserId === myUserId) {
+      // Если выбран сам себя — показываем все сообщения, где я получатель
+      return messages.filter(msg => msg.receiver_id === myUserId);
+    }
+    // Обычная логика для чата между двумя пользователями
     return messages.filter(
-  (msg) =>
-    (msg.sender === users.find(u => u.id === selectedUserId)?.username && msg.receiver_id === myUserId) ||
-    (msg.sender === users.find(u => u.id === myUserId)?.username && msg.receiver_id === selectedUserId)
-);
+      (msg) =>
+        (msg.sender === users.find(u => u.id === selectedUserId)?.username && msg.receiver_id === myUserId) ||
+        (msg.sender === users.find(u => u.id === myUserId)?.username && msg.receiver_id === selectedUserId)
+    );
   };
 
   if (!authenticated) {
