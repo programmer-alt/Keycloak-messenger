@@ -1,5 +1,6 @@
 import React from "react";
 import './cssMessages/userList.css';
+import { useAuth } from "../../context/AuthContext";
 
 // Описываем типы для данных, которые компонент получает
 interface User {
@@ -14,19 +15,32 @@ interface UserListProps {
 }
 
 const UserList: React.FC<UserListProps> = ({ users, selectedUserId, onSelectUser }) => {
+  const { keycloakInstance } = useAuth();
+  // Получаем идентификатор текущего пользователя
+  const myUserId = keycloakInstance?.tokenParsed?.sub;
+ if (!myUserId) return <div> Загурзка пользователей....</div>
   return (
     <ul className="user-list">
-      {users.map((user) => (
-        <li
-          key={user.id}
-          // Если ID пользователя совпадает с выбранным, добавляем класс 'selected' для подсветки
-          className={user.id === selectedUserId ? 'user-list-item selected' : 'user-list-item'}
-          // При клике вызываем функцию onSelectUser и передаем ей ID выбранного пользователя
-          onClick={() => onSelectUser(user.id)}
-        >
-          {user.username}
-        </li>
-      ))}
+      {users.map((user) => {
+        const isMe = String(user.id) === myUserId;
+        return (
+          <li
+            key={user.id}
+            className={
+              user.id === selectedUserId
+                ? isMe
+                  ? 'user-list-item selected my-user'
+                  : 'user-list-item selected'
+                : isMe
+                  ? 'user-list-item my-user'
+                  : 'user-list-item'
+            }
+            onClick={() => onSelectUser(user.id)}
+          >
+            {user.username} {isMe && <span style={{ color: "#28a745", fontWeight: "bold" }}>(я)</span>}
+          </li>
+        );
+      })}
     </ul>
   );
 };
