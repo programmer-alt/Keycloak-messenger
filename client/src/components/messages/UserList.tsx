@@ -27,6 +27,7 @@ const UserList: React.FC<UserListProps> = ({ users, selectedUserId, onSelectUser
           <li
             key={user.id}
             className={
+              // 
               user.id === selectedUserId
                 ? isMe
                   ? 'user-list-item selected my-user'
@@ -37,7 +38,7 @@ const UserList: React.FC<UserListProps> = ({ users, selectedUserId, onSelectUser
             }
             onClick={() => onSelectUser(user.id)}
           >
-            {user.username} {isMe && <span style={{ color: "#28a745", fontWeight: "bold" }}>(я)</span>}
+            {user.username} {isMe && <span className="my-user-label">(я)</span>}
           </li>
         );
       })}
