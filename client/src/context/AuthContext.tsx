@@ -79,36 +79,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return <div>Проверка авторизации...</div>;
   }
   // Если пользователь не авторизован, показываем кнопку входа
-if (!loading && !authenticated) {
-  return (
-    <div style={{ padding: '20px', textAlign: 'center' }}>
-      <h2>Необходима авторизация</h2>
-      <button 
-        onClick={() => keycloak.login()}
-        style={{ padding: '10px 20px', fontSize: '16px' }}
-      >
-        Войти через Keycloak
-      </button>
-    </div>
-  );
-}
+  if (!loading && !authenticated) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <h2>Необходима авторизация</h2>
+        <button 
+          onClick={() => keycloak.login()}
+          style={{ padding: '10px 20px', fontSize: '16px' }}
+        >
+          Войти через Keycloak
+        </button>
+      </div>
+    );
+  }
 
-return (
-  <AuthContext.Provider value={authContextValue}>
-    {children}
-  </AuthContext.Provider>
-);
-
-  // Когда проверка завершена, передаем готовые данные в контекст.
   return (
     <AuthContext.Provider value={authContextValue}>
       {children}
     </AuthContext.Provider>
   );
-};
+}; 
 
 // 4. Создаем кастомный хук для удобного доступа к данным.
-
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {

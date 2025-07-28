@@ -20,3 +20,24 @@
   color: white;
   font-weight: bold;
 }
+
+.user-list-item.my-user {
+  font-style: italic;
+  color: #28a745;
+}
+
+.my-user-label {
+  color: #28a745;
+  font-weight: bold;
+  margin-left: 5px;
+  font-style: italic;
+  user-select: none;
+  font-size: 0.9em;
+  vertical-align: middle;
+}
+
+.user-list-item.selected.my-user {
+  background-color: #0056b3;
+  color: #cce5ff;
+  font-weight: bold;
+}
