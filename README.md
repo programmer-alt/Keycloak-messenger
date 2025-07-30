@@ -314,8 +314,7 @@ sequenceDiagram
 
 **Ваше имя**
 - 📧 Email: your.email@example.com
-- 💼 LinkedIn: [your-profile](https://linkedin.com/in/your-profile)
-- 🐙 GitHub: [your-username](https://github.com/your-username)
+- 🐙 GitHub: [programmer-alt](https://github.com/programmer-alt)
 
 ---
 
