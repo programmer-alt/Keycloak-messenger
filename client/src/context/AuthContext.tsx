@@ -19,7 +19,7 @@ export interface AuthContextType {
   keycloakInstance: typeof Keycloak | null;
 }
 
-// 2. Создаем сам контекст, который будет нести эти данные.
+// 2. Создаем сам контекст, который будет нести данные.
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // 3. Создаем компонент-поставщик (Provider).

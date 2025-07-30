@@ -30,6 +30,8 @@ const MessagesContainer: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [clearingMessages, setClearingMessages] = useState(false);
+  const [typingUserId, setTypingUserId] = useState<string | null>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   //  Используем useRef для хранения экземпляра сокета
   const socketRef = useRef<Socket | null>(null);
 
@@ -62,14 +64,14 @@ const MessagesContainer: React.FC = () => {
   }, [authenticated, keycloakInstance]);
   // Загрузка истории сообщений
   useEffect(() => {
-    if (!authenticated || !keycloakInstance?.token ) {
+    if (!authenticated || !keycloakInstance?.token) {
       setLoading(false);
       return;
     }
-if (users.length === 0) {
-  setLoading(true);
-  return;
-}
+    if (users.length === 0) {
+      setLoading(true);
+      return;
+    }
     setLoading(true);
     setError(null);
 
@@ -140,6 +142,16 @@ if (users.length === 0) {
         console.error("Ошибка очистки сообщений:", error);
         setClearingMessages(false);
       });
+      // Обработчик печатает (typing)
+      newSocket.on("typing", ({ senderId }) => {
+        setTypingUserId(senderId);
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+        }
+        typingTimeoutRef.current = setTimeout(() => {
+          setTypingUserId(null);
+        }, 3000); //  3 секунды
+      });
     }
 
     return () => {
@@ -173,21 +185,32 @@ if (users.length === 0) {
     // Отправляем запрос на очистку сообщений через WebSocket
     socketRef.current.emit("clearMessages");
   };
- const getFilteredMessages = () => {
+  const getFilteredMessages = () => {
     if (!selectedUserId || !keycloakInstance?.tokenParsed?.sub) return [];
     const myUserId = keycloakInstance.tokenParsed.sub;
     if (selectedUserId === myUserId) {
       // Если выбран сам себя — показываем все сообщения, где я получатель
-      return messages.filter(msg => msg.receiver_id === myUserId);
+      return messages.filter((msg) => msg.receiver_id === myUserId);
     }
     // Обычная логика для чата между двумя пользователями
     return messages.filter(
       (msg) =>
-        (msg.sender === users.find(u => u.id === selectedUserId)?.username && msg.receiver_id === myUserId) ||
-        (msg.sender === users.find(u => u.id === myUserId)?.username && msg.receiver_id === selectedUserId)
+        (msg.sender === users.find((u) => u.id === selectedUserId)?.username &&
+          msg.receiver_id === myUserId) ||
+        (msg.sender === users.find((u) => u.id === myUserId)?.username &&
+          msg.receiver_id === selectedUserId)
     );
   };
-
+  // функция отправки  события typing(печатает)
+  const handleTyping = () => {
+    if (
+      socketRef.current &&
+      selectedUserId &&
+      keycloakInstance?.tokenParsed?.sub !== selectedUserId
+    ) {
+      socketRef.current.emit("typing", { recipientId: selectedUserId });
+    }
+  };
   if (!authenticated) {
     return <div>Пожалуйста, войдите, чтобы увидеть сообщения.</div>;
   }
@@ -230,8 +253,13 @@ if (users.length === 0) {
               </button>
             </header>
             {/* Здесь нужно будет фильтровать сообщения для selectedUserId */}
-            <MessageList messages={getFilteredMessages()} users={users} />
-            <MessagesInput onSend={handleSendMessage} />
+            <MessageList 
+              messages={getFilteredMessages()} 
+              users={users} 
+              typingUserId={typingUserId}
+              selectedUserId={selectedUserId}
+            />
+            <MessagesInput onSend={handleSendMessage} onTyping={handleTyping} />
           </>
         ) : (
           <div className="no-chat-selected">

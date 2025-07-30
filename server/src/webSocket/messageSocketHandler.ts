@@ -77,5 +77,14 @@ export function registerMessageSocketHandler(io: SocketIOServer) {
         }
       }
     );
+    // обработчик для печатает...
+    socket.on('typing',(payload: {recipientId: string})=> {
+      if (!userId) return;
+      const {recipientId} = payload;
+      const recipientSocketId = userSocketMap.get(recipientId);
+      if (recipientSocketId) {
+        io.to(recipientSocketId).emit('typing', {senderId: userId});
+      }
+    })
   });
 }
