@@ -1,0 +1,45 @@
+sequenceDiagram
+    participant Client as Клиент (React)
+    participant AuthGate as AuthGate.tsx
+    participant AuthHook as useKeycloakAuth.ts
+    participant AuthContext as AuthContext.tsx
+    participant MsgContainer as MessagesContainer.tsx
+    participant UserList as UserList.tsx
+    participant MsgList as MessageList.tsx
+    participant MsgInput as MessagesInput.tsx
+    participant KeycloakClient as keycloakInitClient.ts
+    participant ServerAPI as Сервер API
+    participant WebSocket as WebSocket сервер
+
+    Client->>AuthGate: Запрос аутентификации
+    AuthGate->>AuthHook: Проверка токена Keycloak
+    AuthHook->>AuthContext: Обновление состояния аутентификации
+    AuthContext-->>AuthGate: Статус аутентификации
+
+    AuthGate-->>Client: Разрешение доступа
+
+    Client->>MsgContainer: Загрузка пользователей (/api/users)
+    MsgContainer->>ServerAPI: GET /api/users (с токеном)
+    ServerAPI-->>MsgContainer: Список пользователей
+
+    Client->>MsgContainer: Загрузка сообщений (/api/messages)
+    MsgContainer->>ServerAPI: GET /api/messages (с токеном)
+    ServerAPI-->>MsgContainer: Список сообщений
+
+    MsgContainer->>WebSocket: Установка соединения (с токеном)
+    WebSocket-->>MsgContainer: Входящие сообщения
+
+    Client->>UserList: Выбор пользователя
+    UserList-->>MsgContainer: selectedUserId
+
+    MsgContainer->>MsgList: Отображение сообщений (фильтрация по selectedUserId)
+    MsgList-->>Пользователь: Показ сообщений
+
+    Пользователь->>MsgInput: Ввод сообщения
+    MsgInput->>MsgContainer: Отправка сообщения
+    MsgContainer->>WebSocket: Отправка сообщения
+
+    WebSocket->>ServerAPI: Обработка и сохранение сообщения
+    ServerAPI-->>WebSocket: Подтверждение
+
+    WebSocket-->>MsgContainer: Новое сообщение (broadcast)

@@ -9,8 +9,10 @@ import { format, parseISO } from 'date-fns';
 interface MessageListProps {
   messages: Message[];
   users: User[];
+  typingUserId?: string | null;
+  selectedUserId?: string | null;
 }
-const MessageList: React.FC<MessageListProps> = ({ messages, users }) => {
+const MessageList: React.FC<MessageListProps> = ({ messages, users, typingUserId, selectedUserId }) => {
   const formatTimestamp = (timestamp: string | undefined) => {
     console.log('Время:', timestamp);
     if (!timestamp) {
@@ -62,6 +64,13 @@ const MessageList: React.FC<MessageListProps> = ({ messages, users }) => {
           </span>
         </div>
       ))}
+      {/* Индикатор "печатает..." */}
+      {typingUserId && typingUserId === selectedUserId && (
+        <div className="typing-indicator">
+          <span className="typing-user">{getUserName(typingUserId)}</span>
+          <span className="typing-text"> печатает...</span>
+        </div>
+      )}
     </div>
   );
 };
